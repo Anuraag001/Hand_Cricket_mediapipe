@@ -24,6 +24,7 @@ for imgPath in myList:
     image = cv2.imread(f'{folderPath}/{imgPath}')
     overlayList.append(image)
 
+upcount=0
 stime = 0
 while True:
     isTrue, frame = cap.read()
@@ -38,7 +39,7 @@ while True:
             mpDraw.draw_landmarks(frame,handLms,mpHands.HAND_CONNECTIONS)
 
         for idx,lm in enumerate(handLms.landmark):
-            print(idx,lm)            # prints the coordinates of the landmarks
+            #print(idx,lm)            # prints the coordinates of the landmarks
             h,w,c=frame.shape
             cx,cy=int(lm.x*w),int(lm.y*h) #converts into pixels
             hand_points.append((cx,cy))
@@ -53,9 +54,9 @@ while True:
         if hand_points[thumb_coordinates[0]][0] > hand_points[thumb_coordinates[1]][0]:
             upcount+=1
 
-        cv2.putText(frame,f'Fingers Up: {upcount}',(10,70),cv2.FONT_HERSHEY_PLAIN,3,(0,255,0),3)
+        cv2.putText(frame,f'Fingers Up: {upcount}',(10,70),cv2.FONT_HERSHEY_PLAIN,3,(255,0,0),3)
             
-    frame[0:200, 0:200] = overlayList[5]
+    frame[0:200, 0:200] = overlayList[upcount]
     etime = time.perf_counter()
     fps = 1 / (etime - stime)
     stime = etime
