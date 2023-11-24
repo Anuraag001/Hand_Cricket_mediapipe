@@ -3,12 +3,29 @@ import time
 import os
 import mediapipe as mp
 import random
+
+score=[0,0]
+
+def bat_bowl(frame,choice):
+     cv2.putText(frame,"You won the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
+     cv2.putText(frame,"Choose 1-3 for bat 4-5 for bowl",(300,300),cv2.FONT_HERSHEY_PLAIN,3,(255,0,0),3)
+     if check>40:
+        return choice
+     else:
+         return -1
+
+def compu_bb(frame):
+    cv2.putText(frame,"You lost the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
+    cv2.putText(frame,"Computer choosing...",(300,300),cv2.FONT_HERSHEY_PLAIN,3,(255,0,0),3)
+    return random.randint(0,1)
+     
 def choice(frame,choice):
      cv2.putText(frame,"Choose 1-3 for even 4-5 for odd",(300,300),cv2.FONT_HERSHEY_PLAIN,3,(255,0,0),3)
      if check>40:
         return choice
      else:
          return -1
+     
 def toss(frame,my_val,compu_val,check,my_choice):
     cv2.putText(frame,"TOSS",(1100,70),cv2.FONT_HERSHEY_PLAIN,3,(255,255,255),3)
     cv2.putText(frame,f"Your choice={my_choice}",(900,100),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),2)
@@ -21,16 +38,32 @@ def toss(frame,my_val,compu_val,check,my_choice):
         if my_choice=="even":
             if sum%2==0:
                 cv2.putText(frame,"You won the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
+                return 1
             else:
                 cv2.putText(frame,"You lost the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
+                return 0
         
         if my_choice=="odd":
             if sum%2!=0:
                 cv2.putText(frame,"You won the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
+                return 1
             else:
                 cv2.putText(frame,"You lost the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
-        
+                return 0
+    
+def innings(frame,bat,comp_val,my_val,change=0):
+    cv2.putText(frame,"1st Innings",(900,70),cv2.FONT_HERSHEY_PLAIN,3,(255,255,255),3)
 
+    if bat==1:
+        cv2.putText(frame,f"(bowl)You:{score[0]}",(900,400),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),2)
+        cv2.putText(frame,f"(bat)CPU:{score[1]}",(900,450),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),2)
+            
+    else:
+        cv2.putText(frame,f"(bat)You:{score[0]}",(900,400),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),2)
+        cv2.putText(frame,f"(bowl)CPU:{score[1]}",(900,450),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),2)
+
+    if change==1:
+        score[bat]=score[bat]+(my_val if bat==0 else comp_val)
 
 
 if __name__ == "__main__":
@@ -61,10 +94,12 @@ if __name__ == "__main__":
     upcount=0
     stime = 0
     phase=0 # 0 toss 1 1st innings 2 2nd innnings
-    check=1
+    check=0
     prev=0
     comp_val=0
     my_choice=""
+    bat=-1
+    # 0 is you 1 is cpu
 
     while True:
         isTrue, frame = cap.read()
@@ -124,9 +159,85 @@ if __name__ == "__main__":
                 my_choice="odd"
                 phase=1
                 check=0
+            final=-1
         
         if phase==1:
-            toss(frame,upcount,comp_val,check,my_choice)
+            final=toss(frame,upcount,comp_val,check,my_choice)
+            if final==1:
+                phase=2
+                check=0
+                cv2.putText(frame,"You won the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
+    
+            elif final==0:
+                phase=3
+                check=0
+                cv2.putText(frame,"You lost the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
+
+            final=-1
+        
+        if phase==2:
+            final=bat_bowl(frame,upcount)
+            if final in (1,2,3):
+                my_choice="bat"
+                bat=0
+                phase=4
+                check=0
+            elif final in (4,5):
+                my_choice="bowl"
+                bat=1
+                phase=4
+                check=0
+            final=-1
+
+        if phase==3:
+            final=compu_bb(frame)
+            if final==1:
+                my_choice="bowl"
+                bat=1
+                phase=4
+                check=0
+            elif final==0:
+                my_choice="bat"
+                bat=0
+                phase=4
+                check=0
+            final=-1
+        
+        if phase==4:
+            if check<30:
+                innings(frame,bat,comp_val,upcount)
+
+            if comp_val==upcount and check>30:
+                check=0
+                bat=(1 if bat==0 else 0)
+                innings(frame,bat,comp_val,upcount)
+                phase=5
+            
+            if check>30:
+                innings(frame,bat,comp_val,upcount,1)
+                check=0
+        
+        if phase==5:
+            if check<30:
+                innings(frame,bat,comp_val,upcount)
+
+            if comp_val==upcount and check>30:
+                check=0
+                bat=(0 if bat==1 else 1)
+                innings(frame,bat,comp_val,upcount,1)
+                phase=6
+                
+            if check>30:
+                innings(frame,bat,comp_val,upcount,1)
+                check=0
+            
+        if phase==6:
+            if score[0]>score[1]:
+                print("You win")
+            else:
+                print("You lose")
+            break
+
 
         cv2.putText(frame,f'{check//10}',(450,650),cv2.FONT_HERSHEY_PLAIN,3,(0,255,0),3)
         cv2.putText(frame,"Opponent",(5,225),cv2.FONT_HERSHEY_PLAIN,2,(0,255,255),2)
