@@ -16,6 +16,8 @@ folderPath = 'finger'
 myList = os.listdir(folderPath)
 print(myList)
 
+finger_coordinates=[(8,6),(12,10),(16,14),(20,18)]
+thumb_coordinates=(4,2)
 
 overlayList = []
 for imgPath in myList:
@@ -31,7 +33,7 @@ while True:
     #print(hand_landmarks)
 
     if hand_landmarks:
-        points=[]
+        hand_points=[]
         for handLms in hand_landmarks:
             mpDraw.draw_landmarks(frame,handLms,mpHands.HAND_CONNECTIONS)
 
@@ -39,10 +41,19 @@ while True:
             print(idx,lm)            # prints the coordinates of the landmarks
             h,w,c=frame.shape
             cx,cy=int(lm.x*w),int(lm.y*h) #converts into pixels
-            points.append((cx,cy))
+            hand_points.append((cx,cy))
         
-        for point in points:
+        for point in hand_points:
             cv2.circle(frame,point,10,(0,0,255),cv2.FILLED)
+
+        upcount=0
+        for coordinate in finger_coordinates:
+            if hand_points[coordinate[0]][1] < hand_points[coordinate[1]][1]:
+                upcount+=1
+        if hand_points[thumb_coordinates[0]][0] > hand_points[thumb_coordinates[1]][0]:
+            upcount+=1
+
+        cv2.putText(frame,f'Fingers Up: {upcount}',(10,70),cv2.FONT_HERSHEY_PLAIN,3,(0,255,0),3)
             
     frame[0:200, 0:200] = overlayList[5]
     etime = time.perf_counter()
