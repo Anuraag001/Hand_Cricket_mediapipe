@@ -3,10 +3,14 @@ import time
 import os
 import mediapipe as mp
 
-w, h = 640, 480
+w, h = 640*2, 480*2
 cap = cv2.VideoCapture(0)
 cap.set(3, w)
 cap.set(4, h)
+
+mpHands = mp.solutions.hands
+hands=mpHands.Hands()
+mpDraw = mp.solutions.drawing_utils
 
 folderPath = 'finger'
 myList = os.listdir(folderPath)
@@ -21,8 +25,25 @@ for imgPath in myList:
 stime = 0
 while True:
     isTrue, frame = cap.read()
-    
+    img_rgb=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+    results=hands.process(img_rgb)
+    hand_landmarks=results.multi_hand_landmarks
+    #print(hand_landmarks)
 
+    if hand_landmarks:
+        points=[]
+        for handLms in hand_landmarks:
+            mpDraw.draw_landmarks(frame,handLms,mpHands.HAND_CONNECTIONS)
+
+        for idx,lm in enumerate(handLms.landmark):
+            print(idx,lm)            # prints the coordinates of the landmarks
+            h,w,c=frame.shape
+            cx,cy=int(lm.x*w),int(lm.y*h) #converts into pixels
+            points.append((cx,cy))
+        
+        for point in points:
+            cv2.circle(frame,point,10,(0,0,255),cv2.FILLED)
+            
     frame[0:200, 0:200] = overlayList[5]
     etime = time.perf_counter()
     fps = 1 / (etime - stime)
