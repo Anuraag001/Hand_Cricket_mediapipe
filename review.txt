@@ -1,0 +1,21 @@
+**********Hand Cricket Game**********
+Toss
+Your choice=even
+Value is You=1 + cpu=2 = 3
+You lost the toss
+CPU choice=bat
+
+You          CPU
+5          4
+5          4
+4          2
+2          1
+1          1
+
+
+
+5          4
+3          5
+2          2
+You lose
+Your score=8 CPU score=11

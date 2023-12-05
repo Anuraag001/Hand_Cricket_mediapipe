@@ -51,8 +51,9 @@ def toss(frame,my_val,compu_val,check,my_choice):
                 cv2.putText(frame,"You lost the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
                 return 0
     
-def innings(frame,bat,comp_val,my_val,change=0):
-    cv2.putText(frame,"1st Innings",(900,70),cv2.FONT_HERSHEY_PLAIN,3,(255,255,255),3)
+def innings(frame,bat,comp_val,my_val,change=0,inning=1):
+    text="st" if inning==1 else "nd"
+    cv2.putText(frame,f"{inning}{text} innings",(900,70),cv2.FONT_HERSHEY_PLAIN,3,(255,255,255),3)
 
     if bat==1:
         cv2.putText(frame,f"(bowl)You:{score[0]}",(900,400),cv2.FONT_HERSHEY_PLAIN,2,(255,255,255),2)
@@ -69,7 +70,9 @@ def innings(frame,bat,comp_val,my_val,change=0):
 if __name__ == "__main__":
     #w, h = 640*2, 480*2
     w,h=1920,1080
-    
+    file=open("review.txt","w")
+    file.write(f"{10*'*'}Hand Cricket Game{10*'*'}\n")
+    file.write('Toss\n')
     cap = cv2.VideoCapture(0)
     cap.set(3, w)
     cap.set(4, h)
@@ -155,10 +158,12 @@ if __name__ == "__main__":
                 my_choice="even"
                 phase=1
                 check=0
+                file.write(f"Your choice={my_choice}\n")
             elif final in (4,5):
                 my_choice="odd"
                 phase=1
                 check=0
+                file.write(f"Your choice={my_choice}\n")
             final=-1
         
         if phase==1:
@@ -166,11 +171,15 @@ if __name__ == "__main__":
             if final==1:
                 phase=2
                 check=0
+                file.write(f"Value is You={upcount} + cpu={comp_val} = {upcount+comp_val}\n\n")
+                file.write("You won the toss\n")
                 cv2.putText(frame,"You won the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
     
             elif final==0:
                 phase=3
                 check=0
+                file.write(f"Value is You={upcount} + cpu={comp_val} = {upcount+comp_val}\n")
+                file.write("You lost the toss\n")
                 cv2.putText(frame,"You lost the toss",(900,300),cv2.FONT_HERSHEY_PLAIN,2,(0,0,0),2)
 
             final=-1
@@ -182,11 +191,15 @@ if __name__ == "__main__":
                 bat=0
                 phase=4
                 check=0
+                file.write(f"Your choice={my_choice}\n\n")
+                file.write(f"You{' '*10}CPU\n")
             elif final in (4,5):
                 my_choice="bowl"
                 bat=1
                 phase=4
                 check=0
+                file.write(f"Your choice={my_choice}\n\n")
+                file.write(f"You{' '*10}CPU\n")
             final=-1
 
         if phase==3:
@@ -196,11 +209,15 @@ if __name__ == "__main__":
                 bat=1
                 phase=4
                 check=0
+                file.write(f"CPU choice=bat\n\n")
+                file.write(f"You{' '*10}CPU\n")
             elif final==0:
                 my_choice="bat"
                 bat=0
                 phase=4
                 check=0
+                file.write(f"CPU choice=bowl\n\n")
+                file.write(f"You{' '*10}CPU\n")
             final=-1
         
         if phase==4:
@@ -211,31 +228,43 @@ if __name__ == "__main__":
                 check=0
                 bat=(1 if bat==0 else 0)
                 innings(frame,bat,comp_val,upcount)
+                file.write(f"{upcount}{' '*10}{comp_val}\n\n\n\n")
                 phase=5
             
-            if check>30:
+            elif check>30:
                 innings(frame,bat,comp_val,upcount,1)
+                file.write(f"{upcount}{' '*10}{comp_val}\n")
                 check=0
         
         if phase==5:
             if check<30:
-                innings(frame,bat,comp_val,upcount)
+                innings(frame,bat,comp_val,upcount,inning=2)
 
             if comp_val==upcount and check>30:
                 check=0
-                bat=(0 if bat==1 else 1)
-                innings(frame,bat,comp_val,upcount,1)
+                innings(frame,bat,comp_val,upcount,0,2)
+                #bat=(0 if bat==1 else 1)
+                #bowl=(1 if bat==0 else 0)
+                file.write(f"{upcount}{' '*10}{comp_val}\n")
                 phase=6
                 
-            if check>30:
-                innings(frame,bat,comp_val,upcount,1)
+            elif check>30:
+                innings(frame,bat,comp_val,upcount,1,2)
+                file.write(f"{upcount}{' '*10}{comp_val}\n")
+                bowl=(1 if bat==0 else 0)
+                if(score[bat]>score[bowl]):
+                    phase=6
                 check=0
             
         if phase==6:
             if score[0]>score[1]:
                 print("You win")
+                file.write("You win\n")
             else:
                 print("You lose")
+                file.write("You lose\n")
+            print(f"Your score={score[0]} CPU score={score[1]}")
+            file.write(f"Your score={score[0]} CPU score={score[1]}\n")
             break
 
 
